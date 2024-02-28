@@ -2,6 +2,18 @@ from math import ceil
 from pandas import read_excel, NA
 
 excel_file = "Echantillonage_Aleatoire_Liste_Clients_La_Poste_DT_25%/Clients.xlsx"
+FUSION_LEN = 10
+
+
+def merge_small_population(clients_total, population):
+    # Filtrer les populations qui ont moins de 8 clients
+    small_groups = population.groupby("Code DT").filter(lambda x: len(x) < FUSION_LEN)
+
+    # transformer la liste en string avec un tiret entre chaque code DT
+    merged_name_code_DT = "-".join(small_groups["Code DT"].unique())
+    
+    # Fusionner les petits groupes avec le reste du groupe
+    clients_total.loc[small_groups.index, "Code DT"] = merged_name_code_DT
 
 
 def main():
@@ -19,6 +31,13 @@ def main():
     clients_total["echantillon"] = NA
 
     # regrouper les clients par population differente
+    clients_by_population = clients_total.groupby(["Direction DTO ou Innov", "PERIMETRE  DTO - DirInnov"])
+
+    # fusionner les populations qui ont moins de 8 clients
+    for _, population in clients_by_population:
+        merge_small_population(clients_total, population)
+
+    # regrouper les clients par population differente après la fusion
     clients_by_population = clients_total.groupby(["Direction DTO ou Innov", "PERIMETRE  DTO - DirInnov", "Code DT"])
 
     total_client = 0
@@ -54,6 +73,9 @@ def main():
     assert total_client == clients_total_size, "Le résultats des échantillons ne contient pas autant d'entrées que au début du programme"
 
     print(clients_total.groupby("echantillon").size())
+
+    # créer un nouveau fichier excel en sortie
+    clients_total.to_excel("Clients_echantillons.xlsx", index=False)
 
 
 if __name__ == "__main__":

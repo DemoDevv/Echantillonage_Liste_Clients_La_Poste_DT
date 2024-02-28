@@ -75,7 +75,7 @@ def main():
     print(clients_total.groupby("echantillon").size())
 
     # créer un nouveau fichier excel en sortie
-    clients_total.to_excel("Echantillonage_Aleatoire_Liste_Clients_La_Poste_DT_25%/Clients_echantillons.xlsx", index=False)
+    clients_total.to_excel("Clients_echantillons.xlsx", index=False)
 
 
 if __name__ == "__main__":

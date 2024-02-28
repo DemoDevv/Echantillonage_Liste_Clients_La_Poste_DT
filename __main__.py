@@ -1,13 +1,13 @@
 from math import ceil
 from pandas import read_excel, NA
-
-excel_file = "Echantillonage_Aleatoire_Liste_Clients_La_Poste_DT_25%/Clients.xlsx"
-FUSION_LEN = 10
+import argparse
 
 
-def merge_small_population(clients_total, population):
+def merge_small_population(clients_total, population, fusion_len):
+    assert fusion_len > 0, "La taille de fusion doit être supérieure à 0"
+
     # Filtrer les populations qui ont moins de 8 clients
-    small_groups = population.groupby("Code DT").filter(lambda x: len(x) < FUSION_LEN)
+    small_groups = population.groupby("Code DT").filter(lambda x: len(x) < fusion_len)
 
     # transformer la liste en string avec un tiret entre chaque code DT
     merged_name_code_DT = "-".join(small_groups["Code DT"].unique())
@@ -16,8 +16,9 @@ def merge_small_population(clients_total, population):
     clients_total.loc[small_groups.index, "Code DT"] = merged_name_code_DT
 
 
-def main():
-    clients_total = read_excel(excel_file)
+def main(args):
+    # lire le fichier excel
+    clients_total = read_excel(args.path)
 
     # remplacer les bonnes valeurs NA par _NA pour que pandas les prenne en compte
     clients_total.fillna("_NA", inplace=True)
@@ -31,14 +32,17 @@ def main():
     clients_total["echantillon"] = NA
 
     # regrouper les clients par population differente
-    clients_by_population = clients_total.groupby(["Direction DTO ou Innov", "PERIMETRE  DTO - DirInnov"])
+    clients_by_population = clients_total.groupby(["Direction DTO ou Innov",
+                                                   "PERIMETRE  DTO - DirInnov"])
 
     # fusionner les populations qui ont moins de 8 clients
     for _, population in clients_by_population:
-        merge_small_population(clients_total, population)
+        merge_small_population(clients_total, population, args.fusion)
 
     # regrouper les clients par population differente après la fusion
-    clients_by_population = clients_total.groupby(["Direction DTO ou Innov", "PERIMETRE  DTO - DirInnov", "Code DT"])
+    clients_by_population = clients_total.groupby(["Direction DTO ou Innov",
+                                                   "PERIMETRE  DTO - DirInnov",
+                                                   "Code DT"])
 
     total_client = 0
 
@@ -69,14 +73,42 @@ def main():
             # ajouter le nombre de clients a la population totale
             total_client += head_25.shape[0]
 
-    assert clients_total[clients_total['echantillon'].isna() == True].shape[0] == 0, "Certaines entrées ne sont affectées à aucun échantillons"
-    assert total_client == clients_total_size, "Le résultats des échantillons ne contient pas autant d'entrées que au début du programme"
+    assert clients_total[clients_total['echantillon'].isna() == True].shape[0] == 0, "Certaines entrées ne\
+          sont affectées à aucun échantillons"
+    assert total_client == clients_total_size, "Le résultats des échantillons ne contient pas autant d'entrées\
+          que au début du programme"
 
     print(clients_total.groupby("echantillon").size())
 
     # créer un nouveau fichier excel en sortie
-    clients_total.to_excel("Clients_echantillons.xlsx", index=False)
+    if args.output:
+        clients_total.to_excel(args.output, index=False)
+    else:
+        clients_total.to_excel("Clients_echantillons.xlsx", index=False)
+    
+    print("Fichier excel créé avec succès au chemin: ", args.output if args.output else "Clients_echantillons.xlsx")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Echantillonage des clients")
+    parser.add_argument("--path",
+        help="Chemin du fichier excel",
+        type=str, 
+        required=True
+    )
+    parser.add_argument(
+        "--fusion",
+        help="Nombre de clients minimum pour fusionner les populations",
+        type=int,
+        default=10,
+        required=False,
+    )
+    parser.add_argument("--output",
+        help="Chemin du fichier de sortie",
+        type=str,
+        required=False
+    )
+
+    args = parser.parse_args()
+
+    main(args)

@@ -85,6 +85,8 @@ def main(args):
         clients_total.to_excel(args.output, index=False)
     else:
         clients_total.to_excel("Clients_echantillons.xlsx", index=False)
+    
+    print("Fichier excel créé avec succès au chemin: ", args.output if args.output else "Clients_echantillons.xlsx")
 
 
 if __name__ == "__main__":

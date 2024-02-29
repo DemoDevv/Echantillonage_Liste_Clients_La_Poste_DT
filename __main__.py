@@ -6,6 +6,8 @@ import argparse
 def merge_small_population(clients_total, population, fusion_len):
     assert fusion_len > 0, "La taille de fusion doit être supérieure à 0"
 
+    clients_total_len = clients_total.shape[0]
+
     # Filtrer les populations qui ont moins de 8 clients
     small_groups = population.groupby("Code DT").filter(lambda x: len(x) < fusion_len)
 
@@ -14,6 +16,8 @@ def merge_small_population(clients_total, population, fusion_len):
     
     # Fusionner les petits groupes avec le reste du groupe
     clients_total.loc[small_groups.index, "Code DT"] = merged_name_code_DT
+
+    assert clients_total.shape[0] == clients_total_len, "la fonction ne doit pas modifier la taille de clients_total"
 
 
 def main(args):

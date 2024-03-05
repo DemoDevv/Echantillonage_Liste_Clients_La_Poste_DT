@@ -1,4 +1,5 @@
 from math import floor
+from random import shuffle
 from pandas import read_excel, NA
 import argparse
 
@@ -50,7 +51,7 @@ def main(args):
     for _, clients in clients_by_population:
 
         size_population_total = clients.shape[0]
-        
+
         size_25 = floor(size_population_total * 0.25)
 
         # taille de la population restante
@@ -70,6 +71,7 @@ def main(args):
         clients_not_in_echantillon_reste = clients[clients['echantillon'].isna() == True]
 
         echantillon = [1, 2, 3, 4]
+        shuffle(echantillon)
 
         # ajouter le reste des clients a un échantillon
         for client in clients_not_in_echantillon_reste.index:

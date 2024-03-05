@@ -22,10 +22,10 @@ def main(args):
     clients_total = read_excel(args.path)
 
     # remplacer les bonnes valeurs NA par _NA pour que pandas les prenne en compte
-    clients_total.fillna("_NA", inplace=True) # FIXME: remplacer les NA uniquement de la colonne PERIMETRE  DTO - DirInnov
+    clients_total["PERIMETRE  DTO - DirInnov"] = clients_total["PERIMETRE  DTO - DirInnov"].fillna("Nouvelle Aquitaine")
 
     # enlever les rows ou "Direction DTO ou Innov" est vide
-    clients_total = clients_total[clients_total["Direction DTO ou Innov"] != "_NA"]
+    clients_total = clients_total[clients_total["Direction DTO ou Innov"].isna() == False]
 
     clients_total_size = clients_total.shape[0]
 

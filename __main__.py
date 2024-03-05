@@ -1,4 +1,5 @@
-from math import ceil
+from math import floor
+from random import shuffle
 from pandas import read_excel, NA
 import argparse
 
@@ -21,7 +22,7 @@ def main(args):
     clients_total = read_excel(args.path)
 
     # remplacer les bonnes valeurs NA par _NA pour que pandas les prenne en compte
-    clients_total.fillna("_NA", inplace=True)
+    clients_total.fillna("_NA", inplace=True) # FIXME: remplacer les NA uniquement de la colonne PERIMETRE  DTO - DirInnov
 
     # enlever les rows ou "Direction DTO ou Innov" est vide
     clients_total = clients_total[clients_total["Direction DTO ou Innov"] != "_NA"]
@@ -45,33 +46,42 @@ def main(args):
                                                    "Code DT"])
 
     total_client = 0
-
-    # boucle pour construire chaque echantillon
-    for i in range(1, 5):
         
-        # print la table par population
-        for _, clients in clients_by_population:
+    # print la table par population
+    for _, clients in clients_by_population:
 
-            size_population_total = clients.shape[0]
+        size_population_total = clients.shape[0]
 
-            # prendre 25% de la population qui ne sont pas dans un echantillon et le ceil pour avoir un nombre entier
-            population_not_in_echantillon = clients[clients["echantillon"].isna()]
+        size_25 = floor(size_population_total * 0.25)
 
-            size_population = population_not_in_echantillon.shape[0]
+        # taille de la population restante
+        _ = size_population_total - (size_25 * 4)
 
-            if size_population == 0:
-                continue
-                
-            size_25 = ceil(size_population_total * 0.25)
+        # séparer la population en 4 échantillons de 25%
+        for i in range(1, 5):
+            clients_not_in_echantillon = clients[clients['echantillon'].isna() == True]
 
             # prendre les 25% de la population
-            head_25 = population_not_in_echantillon.head(size_25)
+            head_25 = clients_not_in_echantillon.head(size_25)
 
             # remplir la colonne echantillon
-            clients_total.loc[head_25.index, "echantillon"] = i
+            clients.loc[head_25.index, "echantillon"] = i
 
-            # ajouter le nombre de clients a la population totale
-            total_client += head_25.shape[0]
+        # ajouter au reste des clients un échantillon unique
+        clients_not_in_echantillon_reste = clients[clients['echantillon'].isna() == True]
+
+        echantillon = [1, 2, 3, 4]
+        shuffle(echantillon)
+
+        # ajouter le reste des clients a un échantillon
+        for client in clients_not_in_echantillon_reste.index:
+            clients.loc[client, "echantillon"] = echantillon.pop(0)
+
+        # ajouter le nombre de clients a la population totale
+        total_client += clients.shape[0]
+
+        # associer le échantillons a la population total
+        clients_total.loc[clients.index, "echantillon"] = clients["echantillon"]
 
     assert clients_total[clients_total['echantillon'].isna() == True].shape[0] == 0, "Certaines entrées ne\
           sont affectées à aucun échantillons"

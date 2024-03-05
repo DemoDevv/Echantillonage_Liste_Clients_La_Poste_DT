@@ -4,6 +4,21 @@ from pandas import read_excel, NA
 import argparse
 
 
+def sanitize(clients_total):
+    # enlever les colonnes inutiles qui vont compliqué le collage des données sur la liste sharepoint
+    return clients_total.drop(columns=["Type d'élément", "Chemin d'accès"])
+
+
+def create_output_file(clients_total, new: bool):
+    clients_total_sanitized = sanitize(clients_total)
+    if new:
+        clients_total_sanitized.to_excel(args.output, index=False)
+    else:
+        clients_total_sanitized.to_excel("Clients_echantillons.xlsx", index=False)
+    
+    print("Fichier excel créé avec succès au chemin: ", args.output if args.output else "Clients_echantillons.xlsx")
+
+
 def merge_small_population(clients_total, population, fusion_len):
     assert fusion_len > 0, "La taille de fusion doit être supérieure à 0"
 
@@ -91,12 +106,7 @@ def main(args):
     print(clients_total.groupby("echantillon").size())
 
     # créer un nouveau fichier excel en sortie
-    if args.output:
-        clients_total.to_excel(args.output, index=False)
-    else:
-        clients_total.to_excel("Clients_echantillons.xlsx", index=False)
-    
-    print("Fichier excel créé avec succès au chemin: ", args.output if args.output else "Clients_echantillons.xlsx")
+    create_output_file(clients_total, args.output)
 
 
 if __name__ == "__main__":

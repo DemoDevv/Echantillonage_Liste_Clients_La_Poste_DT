@@ -2,6 +2,7 @@ from math import floor
 from random import shuffle
 from pandas import read_excel, NA
 import argparse
+import time
 
 
 quadrimestres = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
@@ -16,18 +17,45 @@ def sanitize(clients_total):
     return clients_total
 
 
-def create_output_file(clients_total, args):
+def create_output_file(clients_total, method: str, args):
     clients_total_sanitized = sanitize(clients_total)
+
+    file_name = f"Clients_echantillons_{method}_{time.strftime("%Y-%m-%d")}.xlsx"
+
     if args.output:
         clients_total_sanitized.to_excel(args.output, index=False)
     else:
-        clients_total_sanitized.to_excel("Clients_echantillons.xlsx", index=False)
+        clients_total_sanitized.to_excel(file_name, index=False)
     
-    print("Fichier excel créé avec succès au chemin: ", args.output if args.output else "Clients_echantillons.xlsx")
+    print("Fichier excel créé avec succès au chemin: ", args.output if args.output else file_name)
 
 
 def update(clients_total, args):
-    pass
+    clients_total_size = clients_total.shape[0]
+
+    # récuperer les clients qui n'ont pas d'échantillon
+    clients_not_in_echantillon = clients_total[clients_total['Echantillon'].isna() == True]
+
+    for client in clients_not_in_echantillon.index:
+        # recuperer le mois de création du client
+        mois = clients_total.loc[client, "Créé"].month
+        
+        # trouver le quadrimestre correspondant
+        for quadrimestre in quadrimestres:
+            if mois in quadrimestre:
+                # ajouter l'échantillon correspondant
+                clients_total.loc[client, "Echantillon"] = quadrimestres.index(quadrimestre) + 1
+                break
+
+    assert clients_total[clients_total['Echantillon'].isna() == True].shape[0] == 0, "Certaines entrées ne\
+          sont affectées à aucun échantillons"
+    assert clients_total.shape[0] == clients_total_size, "Le résultats des échantillons ne contient pas autant d'entrées\
+          que au début du programme"
+    
+    print(clients_total.groupby("Echantillon").size())
+
+    # créer un nouveau fichier excel en sortie
+    create_output_file(clients_total, "update", args)
 
 
 def initialisation(clients_total, args):
@@ -43,9 +71,7 @@ def initialisation(clients_total, args):
     total_client = 0
         
     # print la table par population
-    for name, clients in clients_by_population:
-
-        print(name)
+    for _, clients in clients_by_population:
 
         size_population_total = clients.shape[0]
 
@@ -88,7 +114,7 @@ def initialisation(clients_total, args):
     print(clients_total.groupby("Echantillon").size())
 
     # créer un nouveau fichier excel en sortie
-    create_output_file(clients_total, args)
+    create_output_file(clients_total, "initialisation", args)
 
 
 def main(args):
@@ -103,18 +129,6 @@ def main(args):
         update(clients_total, args)
     else:
         initialisation(clients_total, args)
-
-    # exemple pour obtenir le mois
-    # # convertir la colonne "Créé" en datetime pour en obtenir le mois
-    # mois = clients_total.head(1)["Créé"].dt.year[0]
-    # print(mois)
-
-    # remplacer les bonnes valeurs NA par _NA pour que pandas les prenne en compte
-    # clients_total["PERIMETRE  DTO - DirInnov"] = clients_total["PERIMETRE  DTO - DirInnov"].fillna("Nouvelle Aquitaine")
-    # TODO: modifier directement les valeurs NA dans la liste sharepoint
-
-    # enlever les rows ou "Direction DTO ou Innov" est vide
-    # clients_total = clients_total[clients_total["Direction DTO ou Innov"].isna() == False]
 
 
 if __name__ == "__main__":

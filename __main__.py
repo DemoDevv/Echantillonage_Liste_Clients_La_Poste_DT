@@ -5,7 +5,7 @@ import argparse
 import time
 
 
-quadrimestres = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+QUADRIMESTRES = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
 
 
 def sanitize(clients_total):
@@ -41,10 +41,10 @@ def update(clients_total, args):
         mois = clients_total.loc[client, "Créé"].month
         
         # trouver le quadrimestre correspondant
-        for quadrimestre in quadrimestres:
+        for quadrimestre in QUADRIMESTRES:
             if mois in quadrimestre:
                 # ajouter l'échantillon correspondant
-                clients_total.loc[client, "Echantillon"] = quadrimestres.index(quadrimestre) + 1
+                clients_total.loc[client, "Echantillon"] = QUADRIMESTRES.index(quadrimestre) + 1
                 break
 
     assert clients_total[clients_total['Echantillon'].isna() == True].shape[0] == 0, "Certaines entrées ne\

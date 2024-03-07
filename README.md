@@ -41,9 +41,9 @@ python [__main__.py ou Echantillonage_Liste_Clients_La_Poste_DT] [options]
 ### Options
 
 -h ou --help: Affiche l'aide du script.  
---path: Donner le chemin d'accès au fichier Excel qui contient tout les clients à échantillonnés  
---fusion: (optionnel) Permet de donner la limite de taille pour la fusion des petits groupes  
---output: (optionnel) Donner le chemin du fichier de sortie  
+-p ou --path: Donner le chemin d'accès au fichier Excel qui contient tout les clients à échantillonnés  
+-u ou --update: (optionnel) Permet de préciser au script que l'on veux faire une update et pas une initialisation  
+-o ou --output: (optionnel) Donner le chemin du fichier de sortie  
 ### Exemples d'utilisation
 
 ```bash
